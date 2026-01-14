@@ -15,6 +15,10 @@ const app_service_1 = require("./app.service");
 const customers_module_1 = require("./customers/customers.module");
 const sales_setting_module_1 = require("./sales-setting/sales-setting.module");
 const sales_module_1 = require("./sales/sales.module");
+const fbr_module_1 = require("./fbr/fbr.module");
+const roles_module_1 = require("./roles/roles.module");
+const users_module_1 = require("./users/users.module");
+const auth_module_1 = require("./auth/auth.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +32,10 @@ exports.AppModule = AppModule = __decorate([
             customers_module_1.CustomersModule,
             sales_setting_module_1.SalesSettingModule,
             sales_module_1.SalesModule,
+            fbr_module_1.FbrModule,
+            roles_module_1.RolesModule,
+            users_module_1.UsersModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

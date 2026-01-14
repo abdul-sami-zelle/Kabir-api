@@ -5,6 +5,7 @@ export declare class Sale {
     customer_code: string;
     basic_info: {
         company_status: string;
+        company_name: string;
         company_group: string;
         cnic: string;
         country: string;
@@ -14,6 +15,7 @@ export declare class Sale {
     ref_no: string;
     issue_date: string;
     due_date: string;
+    sale_type: string;
     details: {
         items: {
             id: string;
@@ -25,18 +27,18 @@ export declare class Sale {
             fbr_code?: string;
         }[];
         sub_total: number;
-        discount?: {
-            _id?: Types.ObjectId;
-            percentage?: number;
-            value?: number;
-        } | null;
-        tax?: {
-            _id?: Types.ObjectId;
-            percentage?: number;
-            value?: number;
-        } | null;
+        discount: any;
+        tax: {
+            percentage: string;
+            value: string;
+        };
         grand_total: number;
     };
+    sendToFBR: boolean;
+    fbr_response: any;
+    fbr_invoice_no: string;
+    fbr_status: string;
+    fbr_error: string;
 }
 export declare const SaleSchema: import("mongoose").Schema<Sale, import("mongoose").Model<Sale, any, any, any, Document<unknown, any, Sale, any, {}> & Sale & {
     _id: Types.ObjectId;

@@ -12,6 +12,7 @@ const mongoose_1 = require("@nestjs/mongoose");
 const customers_service_1 = require("./customers.service");
 const customers_controller_1 = require("./customers.controller");
 const customer_schema_1 = require("./schemas/customer.schema");
+const fbr_module_1 = require("../fbr/fbr.module");
 let CustomersModule = class CustomersModule {
 };
 exports.CustomersModule = CustomersModule;
@@ -19,6 +20,7 @@ exports.CustomersModule = CustomersModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: customer_schema_1.Customer.name, schema: customer_schema_1.CustomerSchema }]),
+            fbr_module_1.FbrModule
         ],
         controllers: [customers_controller_1.CustomersController],
         providers: [customers_service_1.CustomersService],

@@ -23,8 +23,10 @@ let SalesController = class SalesController {
     async create(body) {
         return this.salesService.createSale(body);
     }
-    async getAll() {
-        return this.salesService.getAllSales();
+    async getAll(page, limit) {
+        const pageNum = page ? parseInt(page, 10) : 1;
+        const limitNum = limit ? parseInt(limit, 10) : 10;
+        return this.salesService.getAllSales(pageNum, limitNum);
     }
     async getOne(id) {
         return this.salesService.getSaleById(id);
@@ -34,6 +36,9 @@ let SalesController = class SalesController {
     }
     async delete(id) {
         return this.salesService.deleteSale(id);
+    }
+    async sendToFBR(body) {
+        return this.salesService.sendToFBR(body.inv_no);
     }
 };
 exports.SalesController = SalesController;
@@ -46,8 +51,10 @@ __decorate([
 ], SalesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], SalesController.prototype, "getAll", null);
 __decorate([
@@ -72,6 +79,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SalesController.prototype, "delete", null);
+__decorate([
+    (0, common_1.Post)('send-to-fbr'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SalesController.prototype, "sendToFBR", null);
 exports.SalesController = SalesController = __decorate([
     (0, common_1.Controller)('sales'),
     __metadata("design:paramtypes", [sales_service_1.SalesService])

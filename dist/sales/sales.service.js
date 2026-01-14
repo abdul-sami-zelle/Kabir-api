@@ -46,23 +46,78 @@ let SalesService = class SalesService {
         data.details = data.details ?? {
             items: [],
             sub_total: 0,
-            discount: null,
-            tax: null,
+            discount: { percentage: 0, value: 0 },
+            tax: { percentage: '0', value: '0' },
             grand_total: 0,
         };
-        if (!data.details.discount)
-            data.details.discount = null;
-        if (!data.details.tax)
-            data.details.tax = null;
-        const newSale = new this.saleModel({
+        const sale = new this.saleModel({
             ...data,
             inv_no,
             ref_no,
+            fbr_status: data.sendToFBR ? 'PENDING' : 'PENDING',
         });
-        return newSale.save();
+        const savedSale = await sale.save();
+        if (data.sendToFBR === true) {
+            try {
+                const fbrResult = await this.sendToFBR(savedSale.inv_no);
+                const fbrInvoiceNo = fbrResult?.fbr_response?.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || null;
+                await this.saleModel.findByIdAndUpdate(savedSale._id, {
+                    fbr_status: 'SENT',
+                    fbr_invoice_no: fbrInvoiceNo,
+                    fbr_response: fbrResult.fbr_response,
+                });
+                return {
+                    success: true,
+                    sale: savedSale,
+                    fbr: fbrResult,
+                };
+            }
+            catch (error) {
+                await this.saleModel.findByIdAndUpdate(savedSale._id, {
+                    fbr_status: 'FAILED',
+                    fbr_error: error.message,
+                });
+                throw new Error(`FBR Error: ${error.message}`);
+            }
+        }
+        return {
+            sale: savedSale,
+            message: 'Sale created without FBR submission',
+        };
     }
-    async getAllSales() {
-        return this.saleModel.find().populate('customer_id').exec();
+    async getAllSales(page = 1, limit = 10) {
+        page = Math.max(page, 1);
+        limit = Math.max(limit, 1);
+        const skip = (page - 1) * limit;
+        const totalCount = await this.saleModel.countDocuments();
+        const sales = await this.saleModel
+            .find()
+            .populate('customer_id')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(totalCount / limit);
+        const currentCount = sales.length;
+        const allSales = await this.saleModel.find();
+        const totalSalesPKR = allSales.reduce((acc, sale) => acc + (sale.details?.grand_total || 0), 0);
+        const totalInvoices = allSales.length;
+        const CustomerModel = this.saleModel.db.model('Customer');
+        const totalActiveCustomers = await CustomerModel.countDocuments({ status: 'ACTIVE' });
+        return {
+            sales,
+            pagination: {
+                totalPages,
+                currentPage: page,
+                totalCount,
+                currentCount,
+            },
+            totals: {
+                totalSalesPKR,
+                totalInvoices,
+                totalActiveCustomers,
+            },
+        };
     }
     async getSaleById(id) {
         const sale = await this.saleModel.findById(id).populate('customer_id').exec();
@@ -81,6 +136,106 @@ let SalesService = class SalesService {
         if (!deleted)
             throw new common_1.NotFoundException('Sale not found');
         return { message: 'Sale deleted successfully' };
+    }
+    async sendToFBR(inv_no) {
+        if (!inv_no) {
+            throw new common_1.NotFoundException('inv_no is required');
+        }
+        const sale = await this.saleModel.findOne({ inv_no }).populate('customer_id').exec();
+        if (!sale) {
+            throw new common_1.NotFoundException('Invoice not found with given inv_no');
+        }
+        const buyer = sale.customer_id;
+        const items = sale.details.items.map(item => {
+            const quantity = item.qty;
+            const rate = item.rate;
+            const totalValues = quantity * rate;
+            const taxPercentage = parseFloat(sale.details.tax?.percentage || '0');
+            const discountValue = sale.details.discount?.value || 0;
+            return {
+                hsCode: item.hs_code || "",
+                productDescription: item.name || "",
+                rate: `${taxPercentage}%`,
+                uoM: item?.fbr_code || "Numbers, pieces, units",
+                quantity: quantity,
+                totalValues: totalValues,
+                valueSalesExcludingST: totalValues,
+                fixedNotifiedValueOrRetailPrice: 0.0,
+                salesTaxApplicable: parseFloat(((totalValues * taxPercentage) / 100).toFixed(2)),
+                salesTaxWithheldAtSource: 0.0,
+                extraTax: 0.0,
+                furtherTax: 0.0,
+                sroScheduleNo: "",
+                fedPayable: 0.0,
+                discount: discountValue,
+                saleType: sale.sale_type,
+                sroItemSerialNo: "",
+            };
+        });
+        const payload = {
+            invoiceType: "Sale Invoice",
+            invoiceDate: sale.issue_date,
+            sellerNTNCNIC: "6575319",
+            sellerBusinessName: "Future Gulf Tech Cont",
+            sellerProvince: "Sindh",
+            sellerAddress: "Karachi",
+            buyerNTNCNIC: buyer?.cnic || "",
+            buyerBusinessName: buyer?.customerName || "",
+            buyerProvince: buyer?.provinceState || "",
+            buyerAddress: buyer?.addressLine1 || "",
+            buyerRegistrationType: buyer?.fbrVerification?.type,
+            invoiceRefNo: sale.ref_no,
+            scenarioId: "SN018",
+            items: items,
+        };
+        const apiUrl = "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb";
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.FBR_POST_API_KEY}`,
+                },
+                body: JSON.stringify(payload),
+            });
+            console.log(payload);
+            const rawText = await response.text();
+            console.log(rawText);
+            let result;
+            try {
+                result = rawText ? JSON.parse(rawText) : null;
+            }
+            catch (err) {
+                throw new Error(`FBR returned invalid JSON: ${rawText}`);
+            }
+            if (!result?.validationResponse) {
+                throw new Error(`FBR response missing validationResponse: ${rawText}`);
+            }
+            const validation = result.validationResponse;
+            const fbrInvoiceNo = validation.invoiceStatuses?.[0]?.invoiceNo || null;
+            const fbrStatus = validation.statusCode === '00' ? 'SENT' : 'FAILED';
+            const fbrError = validation.statusCode !== '00' ? validation.error || 'FBR validation failed' : null;
+            await this.saleModel.findByIdAndUpdate(sale._id, {
+                fbr_status: fbrStatus,
+                fbr_invoice_no: fbrInvoiceNo,
+                fbr_response: result,
+                fbr_error: fbrError,
+            });
+            if (fbrStatus === 'FAILED') {
+                throw new common_1.BadRequestException(`FBR validation failed: ${fbrError}`);
+            }
+            return {
+                success: true,
+                message: 'Invoice successfully validated by FBR',
+                fbr_response: result,
+            };
+        }
+        catch (err) {
+            if (err instanceof common_1.BadRequestException || err instanceof common_1.NotFoundException) {
+                throw err;
+            }
+            throw new common_1.BadRequestException(`FBR API request failed: ${err.message}`);
+        }
     }
 };
 exports.SalesService = SalesService;

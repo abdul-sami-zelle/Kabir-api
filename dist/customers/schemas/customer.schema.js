@@ -9,24 +9,56 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CustomerSchema = exports.Customer = exports.CustomerStatus = void 0;
+exports.CustomerSchema = exports.Customer = exports.FbrVerificationSchema = exports.FbrVerification = exports.FBRStatus = exports.FBRRegistrationType = exports.CustomerStatus = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var CustomerStatus;
 (function (CustomerStatus) {
     CustomerStatus["ACTIVE"] = "ACTIVE";
     CustomerStatus["INACTIVE"] = "INACTIVE";
 })(CustomerStatus || (exports.CustomerStatus = CustomerStatus = {}));
+var FBRRegistrationType;
+(function (FBRRegistrationType) {
+    FBRRegistrationType["REGISTERED"] = "Registered";
+    FBRRegistrationType["UNREGISTERED"] = "Unregistered";
+})(FBRRegistrationType || (exports.FBRRegistrationType = FBRRegistrationType = {}));
+var FBRStatus;
+(function (FBRStatus) {
+    FBRStatus["ACTIVE"] = "ACTIVE";
+    FBRStatus["INACTIVE"] = "INACTIVE";
+})(FBRStatus || (exports.FBRStatus = FBRStatus = {}));
+let FbrVerification = class FbrVerification {
+    type;
+    status;
+    checkedOn;
+};
+exports.FbrVerification = FbrVerification;
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, enum: FBRRegistrationType, required: true }),
+    __metadata("design:type", String)
+], FbrVerification.prototype, "type", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, enum: FBRStatus, required: true }),
+    __metadata("design:type", String)
+], FbrVerification.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: Date.now }),
+    __metadata("design:type", Date)
+], FbrVerification.prototype, "checkedOn", void 0);
+exports.FbrVerification = FbrVerification = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], FbrVerification);
+exports.FbrVerificationSchema = mongoose_1.SchemaFactory.createForClass(FbrVerification);
 let Customer = class Customer {
     customerName;
     customerType;
-    customerGroup;
     cnic;
+    billingCurrency;
+    customerGroup;
     territory;
     fromLead;
     fromOpportunity;
     accountManager;
     defaultPriceList;
-    billingCurrency;
     companyBankAccount;
     addressTitle;
     addressType;
@@ -35,6 +67,7 @@ let Customer = class Customer {
     city;
     countyDistrict;
     provinceState;
+    provinceCode;
     country;
     postalCode;
     emailAddress;
@@ -54,6 +87,7 @@ let Customer = class Customer {
     agingGroup;
     defaultBankAccount;
     logoUrl;
+    fbrVerification;
     notes;
     status;
 };
@@ -69,13 +103,17 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], Customer.prototype, "customerGroup", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
 ], Customer.prototype, "cnic", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Customer.prototype, "billingCurrency", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Customer.prototype, "customerGroup", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Customer.prototype, "territory", void 0);
 __decorate([
@@ -94,10 +132,6 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Customer.prototype, "defaultPriceList", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
-], Customer.prototype, "billingCurrency", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
@@ -130,6 +164,10 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Customer.prototype, "provinceState", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: "0" }),
+    __metadata("design:type", String)
+], Customer.prototype, "provinceCode", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
@@ -207,11 +245,19 @@ __decorate([
     __metadata("design:type", String)
 ], Customer.prototype, "logoUrl", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ type: exports.FbrVerificationSchema, required: false }),
+    __metadata("design:type", FbrVerification)
+], Customer.prototype, "fbrVerification", void 0);
+__decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Customer.prototype, "notes", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: CustomerStatus, default: CustomerStatus.ACTIVE }),
+    (0, mongoose_1.Prop)({
+        type: String,
+        enum: CustomerStatus,
+        default: CustomerStatus.ACTIVE,
+    }),
     __metadata("design:type", String)
 ], Customer.prototype, "status", void 0);
 exports.Customer = Customer = __decorate([

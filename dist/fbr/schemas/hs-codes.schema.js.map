@@ -1,0 +1,1 @@
+{"version":3,"file":"hs-codes.schema.js","sourceRoot":"","sources":["../../../src/fbr/schemas/hs-codes.schema.ts"],"names":[],"mappings":";;;AAAA,uCAA4C;AAO/B,QAAA,YAAY,GAAG,IAAI,iBAAM,CAAiB;IACrD,OAAO,EAAE,EAAE,IAAI,EAAE,MAAM,EAAE,QAAQ,EAAE,IAAI,EAAE,MAAM,EAAE,IAAI,EAAE;IACvD,WAAW,EAAE,EAAE,IAAI,EAAE,MAAM,EAAE,QAAQ,EAAE,IAAI,EAAE;CAC9C,CAAC,CAAC"}

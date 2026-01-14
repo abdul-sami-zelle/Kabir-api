@@ -4,17 +4,39 @@ export declare enum CustomerStatus {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE"
 }
+export declare enum FBRRegistrationType {
+    REGISTERED = "Registered",
+    UNREGISTERED = "Unregistered"
+}
+export declare enum FBRStatus {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE"
+}
+export declare class FbrVerification {
+    type: FBRRegistrationType;
+    status: FBRStatus;
+    checkedOn: Date;
+}
+export declare const FbrVerificationSchema: import("mongoose").Schema<FbrVerification, import("mongoose").Model<FbrVerification, any, any, any, Document<unknown, any, FbrVerification, any, {}> & FbrVerification & {
+    _id: import("mongoose").Types.ObjectId;
+} & {
+    __v: number;
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, FbrVerification, Document<unknown, {}, import("mongoose").FlatRecord<FbrVerification>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<FbrVerification> & {
+    _id: import("mongoose").Types.ObjectId;
+} & {
+    __v: number;
+}>;
 export declare class Customer {
     customerName: string;
     customerType: string;
+    cnic: string;
+    billingCurrency: string;
     customerGroup?: string;
-    cnic?: string;
     territory?: string;
     fromLead?: string;
     fromOpportunity?: string;
     accountManager?: string;
     defaultPriceList?: string;
-    billingCurrency?: string;
     companyBankAccount?: string;
     addressTitle?: string;
     addressType?: string;
@@ -23,6 +45,7 @@ export declare class Customer {
     city?: string;
     countyDistrict?: string;
     provinceState?: string;
+    provinceCode?: string;
     country?: string;
     postalCode?: string;
     emailAddress?: string;
@@ -42,6 +65,7 @@ export declare class Customer {
     agingGroup?: string;
     defaultBankAccount?: string;
     logoUrl?: string;
+    fbrVerification?: FbrVerification;
     notes?: string;
     status: CustomerStatus;
 }

@@ -17,12 +17,25 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const customer_schema_1 = require("./schemas/customer.schema");
+const fbr_service_1 = require("../fbr/fbr.service");
 let CustomersService = class CustomersService {
     customerModel;
-    constructor(customerModel) {
+    fbrService;
+    constructor(customerModel, fbrService) {
         this.customerModel = customerModel;
+        this.fbrService = fbrService;
     }
     async create(data) {
+        if (data.cnic) {
+            const today = new Date().toISOString().split('T')[0];
+            const regType = await this.fbrService.checkRegistrationType(data.cnic);
+            const status = await this.fbrService.checkActiveStatus(data.cnic, today);
+            data.fbrVerification = {
+                type: regType,
+                status,
+                checkedOn: new Date(),
+            };
+        }
         const customer = new this.customerModel(data);
         return customer.save();
     }
@@ -54,6 +67,7 @@ exports.CustomersService = CustomersService;
 exports.CustomersService = CustomersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(customer_schema_1.Customer.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        fbr_service_1.FbrService])
 ], CustomersService);
 //# sourceMappingURL=customers.service.js.map

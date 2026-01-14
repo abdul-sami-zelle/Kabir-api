@@ -3,30 +3,70 @@ import { Document } from 'mongoose';
 
 export type CustomerDocument = Customer & Document;
 
+/* =======================
+   CUSTOMER STATUS
+======================= */
 export enum CustomerStatus {
     ACTIVE = 'ACTIVE',
     INACTIVE = 'INACTIVE',
 }
 
+/* =======================
+   FBR VERIFICATION ENUMS
+======================= */
+export enum FBRRegistrationType {
+    REGISTERED = 'Registered',
+    UNREGISTERED = 'Unregistered',
+}
 
+export enum FBRStatus {
+    ACTIVE = 'ACTIVE',
+    INACTIVE = 'INACTIVE',
+}
 
+/* =======================
+   FBR VERIFICATION SUB-SCHEMA
+======================= */
+@Schema({ _id: false })
+export class FbrVerification {
+
+    @Prop({ type: String, enum: FBRRegistrationType, required: true })
+    type: FBRRegistrationType;
+
+    @Prop({ type: String, enum: FBRStatus, required: true })
+    status: FBRStatus;
+
+    @Prop({ type: Date, default: Date.now })
+    checkedOn: Date;
+}
+
+export const FbrVerificationSchema =
+    SchemaFactory.createForClass(FbrVerification);
+
+/* =======================
+   CUSTOMER SCHEMA
+======================= */
 @Schema({ timestamps: true })
 export class Customer {
-    // ✅ Essential fields (required)
+
+    /* ========= ESSENTIAL ========= */
     @Prop({ required: true })
     customerName: string;
 
     @Prop({ required: true })
     customerType: string;
 
-    // 🟡 Optional fields
     @Prop({ required: true })
+    cnic: string;
+
+    @Prop({ required: true })
+    billingCurrency: string;
+
+    /* ========= OPTIONAL ========= */
+    @Prop()
     customerGroup?: string;
 
-    @Prop({ required: true })
-    cnic?: string;
-
-    @Prop({ required: true })
+    @Prop()
     territory?: string;
 
     @Prop()
@@ -41,13 +81,10 @@ export class Customer {
     @Prop()
     defaultPriceList?: string;
 
-    @Prop({ required: true })
-    billingCurrency?: string;
-
     @Prop()
     companyBankAccount?: string;
 
-    // 🏠 Address Information
+    /* ========= ADDRESS ========= */
     @Prop()
     addressTitle?: string;
 
@@ -69,13 +106,16 @@ export class Customer {
     @Prop()
     provinceState?: string;
 
+    @Prop({ default: "0" })
+    provinceCode?: string;
+
     @Prop()
     country?: string;
 
     @Prop()
     postalCode?: string;
 
-    // ☎️ Contact Information
+    /* ========= CONTACT ========= */
     @Prop()
     emailAddress?: string;
 
@@ -85,7 +125,7 @@ export class Customer {
     @Prop()
     faxNumber?: string;
 
-    // 🧾 Tax Information
+    /* ========= TAX ========= */
     @Prop()
     taxCategory?: string;
 
@@ -98,7 +138,6 @@ export class Customer {
     @Prop({ type: String, default: null })
     taxExemptionCertificate: string | null;
 
-
     @Prop()
     vatNumber?: string;
 
@@ -108,7 +147,7 @@ export class Customer {
     @Prop()
     withholdingTaxApplicable?: string;
 
-    // 💰 Financial Information
+    /* ========= FINANCIAL ========= */
     @Prop()
     customerCode?: string;
 
@@ -130,11 +169,19 @@ export class Customer {
     @Prop()
     logoUrl?: string;
 
-    // 🗒️ Misc
+    /* ========= FBR VERIFICATION ========= */
+    @Prop({ type: FbrVerificationSchema, required: false })
+    fbrVerification?: FbrVerification;
+
+    /* ========= MISC ========= */
     @Prop()
     notes?: string;
 
-    @Prop({ type: String, enum: CustomerStatus, default: CustomerStatus.ACTIVE })
+    @Prop({
+        type: String,
+        enum: CustomerStatus,
+        default: CustomerStatus.ACTIVE,
+    })
     status: CustomerStatus;
 }
 

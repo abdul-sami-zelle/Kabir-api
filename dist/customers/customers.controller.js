@@ -24,6 +24,7 @@ let CustomersController = class CustomersController {
         this.customersService = customersService;
     }
     async create(file, body) {
+        console.log(body, "here");
         if (file) {
             body.logoUrl = `/uploads/customers/${file.filename}`;
         }
@@ -57,7 +58,7 @@ __decorate([
             },
         }),
         fileFilter: (req, file, callback) => {
-            if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+            if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|svg\+xml)$/)) {
                 return callback(new Error('Only image files are allowed!'), false);
             }
             callback(null, true);

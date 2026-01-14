@@ -20,7 +20,13 @@ let Sale = class Sale {
     ref_no;
     issue_date;
     due_date;
+    sale_type;
     details;
+    sendToFBR;
+    fbr_response;
+    fbr_invoice_no;
+    fbr_status;
+    fbr_error;
 };
 exports.Sale = Sale;
 __decorate([
@@ -28,7 +34,7 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], Sale.prototype, "customer_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ type: String, required: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "customer_code", void 0);
 __decorate([
@@ -36,7 +42,7 @@ __decorate([
         type: {
             company_status: { type: String, required: true },
             company_name: { type: String, required: true },
-            company_group: { type: String, required: true },
+            company_group: { type: String, required: false },
             cnic: { type: String, required: true },
             country: { type: String, required: true },
             currency: { type: String, required: true },
@@ -46,21 +52,25 @@ __decorate([
     __metadata("design:type", Object)
 ], Sale.prototype, "basic_info", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ type: String, required: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "inv_no", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ type: String, required: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "ref_no", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ type: String, required: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "issue_date", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ type: String, required: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "due_date", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: true }),
+    __metadata("design:type", String)
+], Sale.prototype, "sale_type", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         type: {
@@ -82,15 +92,20 @@ __decorate([
                     percentage: { type: Number },
                     value: { type: Number },
                 },
-                default: null,
+                default: {
+                    percentage: 0,
+                    value: 0,
+                },
             },
             tax: {
                 type: {
-                    _id: { type: mongoose_2.Types.ObjectId, ref: 'TaxType' },
-                    percentage: { type: Number },
-                    value: { type: Number },
+                    percentage: { type: String, default: '0' },
+                    value: { type: String, default: '0' },
                 },
-                default: null,
+                default: {
+                    percentage: '0',
+                    value: '0',
+                },
             },
             grand_total: { type: Number, required: true },
         },
@@ -98,6 +113,37 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], Sale.prototype, "details", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Boolean, default: false }),
+    __metadata("design:type", Boolean)
+], Sale.prototype, "sendToFBR", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: {
+            invoiceNumber: { type: String },
+            dated: { type: String },
+            validationResponse: { type: Object },
+        },
+        default: null,
+    }),
+    __metadata("design:type", Object)
+], Sale.prototype, "fbr_response", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "fbr_invoice_no", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: String,
+        enum: ['PENDING', 'SENT', 'FAILED'],
+        default: 'PENDING',
+    }),
+    __metadata("design:type", String)
+], Sale.prototype, "fbr_status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "fbr_error", void 0);
 exports.Sale = Sale = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Sale);

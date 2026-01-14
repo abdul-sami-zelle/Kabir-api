@@ -23,13 +23,22 @@
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import cookieParser from 'cookie-parser';
+
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:5173', // <-- your React dev server URL
+    credentials: true,               // <-- required for cookies
+  });
+
+  app.use(cookieParser());
+
 
   // ✅ Ensure upload folder exists
   const uploadPath = join(__dirname, '..', 'uploads/customers');
@@ -42,7 +51,9 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  await app.listen(3000);
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  await app.listen(process.env.PORT!);
   console.log(`🚀 Server running on: http://localhost:3000`);
 }
 bootstrap();

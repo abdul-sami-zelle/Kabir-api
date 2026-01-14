@@ -6,6 +6,10 @@ import { AppService } from './app.service';
 import { CustomersModule } from './customers/customers.module';
 import { SalesSettingModule } from './sales-setting/sales-setting.module';
 import { SalesModule } from './sales/sales.module';
+import { FbrModule } from './fbr/fbr.module';
+import { RolesModule } from './roles/roles.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +26,14 @@ import { SalesModule } from './sales/sales.module';
     SalesSettingModule,
 
     SalesModule,
+
+    FbrModule,
+
+    RolesModule,
+
+    UsersModule,
+
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -30,7 +30,7 @@ export class CustomersController {
                 },
             }),
             fileFilter: (req, file, callback) => {
-                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|svg\+xml)$/)) {
                     return callback(new Error('Only image files are allowed!'), false);
                 }
                 callback(null, true);
@@ -40,6 +40,7 @@ export class CustomersController {
     )
 
     async create(@UploadedFile() file: Express.Multer.File, @Body() body: any) {
+        console.log(body,"here")
         if (file) {
             body.logoUrl = `/uploads/customers/${file.filename}`;
         }
