@@ -254,6 +254,15 @@ export class Sale {
     grand_total: number;
   };
 
+  // ================= SALE STATUS =================
+  @Prop({
+    type: String,
+    enum: ['UNPAID', 'PAID', 'CANCELED'],
+    default: 'UNPAID',
+  })
+  status: string;
+
+
 
   // ================= FBR FLAGS =================
   @Prop({ type: Boolean, default: false })
@@ -279,8 +288,32 @@ export class Sale {
   })
   fbr_status: string;
 
+
   @Prop({ type: String, default: null })
   fbr_error: string;
+
+  // ================= CREATED BY USER =================
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+
+  // ================= ORDER / PO INFO =================
+  @Prop({ type: String, default: null })
+  po: string;
+
+  @Prop({ type: String, default: null })
+  orderNo: string;
+
+  @Prop({
+    type: String,
+    enum: ['Initial', 'Final'], // adjust as needed
+    default: 'Final',
+  })
+  invMode: string;
+
+  @Prop({ type: String, default: null })
+  poDate: string;
+
+
 }
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);

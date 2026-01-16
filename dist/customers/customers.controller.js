@@ -33,6 +33,9 @@ let CustomersController = class CustomersController {
     findAll() {
         return this.customersService.findAll();
     }
+    async getPaginated(page, limit, status, customerName, customerType, fbrRegistrationType, fbrStatus, provinceCode) {
+        return this.customersService.findAllPaginated(parseInt(page) || 1, parseInt(limit) || 10, { status, customerName, customerType, fbrRegistrationType, fbrStatus, provinceCode });
+    }
     findOne(id) {
         return this.customersService.findOne(id);
     }
@@ -77,6 +80,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('get-all'),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('status')),
+    __param(3, (0, common_1.Query)('customerName')),
+    __param(4, (0, common_1.Query)('customerType')),
+    __param(5, (0, common_1.Query)('fbrRegistrationType')),
+    __param(6, (0, common_1.Query)('fbrStatus')),
+    __param(7, (0, common_1.Query)('provinceCode')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], CustomersController.prototype, "getPaginated", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

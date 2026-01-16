@@ -4,6 +4,9 @@ import * as nodemailer from 'nodemailer';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { Types } from 'mongoose';
+import * as fs from 'fs';
+import * as path from 'path';
+
 
 @Injectable()
 export class AuthService {
@@ -12,7 +15,7 @@ export class AuthService {
         public jwtService: JwtService,
     ) { }
 
-    // 🔹 REGISTER USER (no OTP)
+    // ðŸ”¹ REGISTER USER (no OTP)
     async register(body: any) {
         const { email, password, username, fullName, roleId, gender, profile, dob } = body;
 
@@ -63,7 +66,7 @@ export class AuthService {
 
         // Send OTP on EMAIL (email still used for delivery)
         try {
-            await this.sendOtpEmail(user.email, otp);
+            await this.sendOtpEmail(user.email,user.fullName, otp);
         } catch (error) {
             console.error('OTP email failed:', error.message);
         }
@@ -76,27 +79,82 @@ export class AuthService {
 
 
 
-    async sendOtpEmail(email: string, otp: string) {
+    //     async sendOtpEmail(email: string, otp: string) {
+    //   const transporter = nodemailer.createTransport({
+    //     host: 'mail.simplykabir.com',
+    //     port: 587,
+    //     secure: false, // TLS
+    //     auth: {
+    //       user: 'no-reply@simplykabir.com',
+    //       pass: 'delta@123@@',
+    //     },
+    //     tls: {
+    //       servername: 'simplykabir.com', // ✅ MATCH CERT
+    //       minVersion: 'TLSv1.2',
+    //     },
+    //     connectionTimeout: 20000,
+    //     greetingTimeout: 20000,
+    //     socketTimeout: 20000,
+    //   });
+
+    //   await transporter.sendMail({
+    //     from: 'My App <no-reply@simplykabir.com>',
+    //     to: email,
+    //     subject: 'Login OTP',
+    //     text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+    //   });
+    // }
+
+
+    async sendOtpEmail(email: string, fullName: string, otp: string) {
+        // Split OTP into 6 digits
+        const otpDigits = otp.split(''); // ['1','2','3','4','5','6']
+
+        const templatePath = path.join(
+            process.cwd(),
+            'src',
+            'mail',
+            'templates',
+            'otp.html',
+        );
+
+        console.log(templatePath)
+        console.log(fullName)
+        console.log(otpDigits)
+
+        let html = fs.readFileSync(templatePath, 'utf8');
+
+        // Replace variables
+        html = html.replace('{{full_name}}', fullName);
+        for (let i = 0; i < 6; i++) {
+            html = html.replace(`{{otp_${i + 1}}}`, otpDigits[i] || '');
+        }
+
         const transporter = nodemailer.createTransport({
-            host: 'mail.simplykabir.com', // Replace with your SMTP server
-            port: 587,                    // Usually 465 for SSL, or 587 for TLS
-            secure: false,                 // true for port 465, false for port 587
+            host: 'mail.simplykabir.com',
+            port: 587,
+            secure: false,
             auth: {
-                user: 'info@simplykabir.com',     // Your Webmail address
-                pass: 'sigma@123@@@'     // Your Webmail password
-            }
+                user: 'no-reply@simplykabir.com',
+                pass: 'delta@123@@',
+            },
+            requireTLS: true,
+            tls: {
+                servername: 'simplykabir.com',
+                minVersion: 'TLSv1.2',
+            },
         });
-
-
-
 
         await transporter.sendMail({
-            from: 'My App <info@simplykabir.com>',
+            from: 'My App <no-reply@simplykabir.com>',
             to: email,
-            subject: 'Login OTP',
-            text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+            subject: 'Your Login OTP',
+            html, // HTML with full name and separate OTP digits
         });
     }
+
+
+
 
     async verifyOtp(body: any) {
         const { username, otp } = body;
@@ -116,7 +174,7 @@ export class AuthService {
         const token = this.jwtService.sign({
             sub: (user._id as Types.ObjectId).toString(),
             roleId: user.roleId,
-        });
+        },{ secret: process.env.JWT_SECRET });
 
         // Clear OTP & update last login
         await this.usersService.update((user._id as Types.ObjectId).toString(), {
@@ -125,7 +183,7 @@ export class AuthService {
             lastLoginAt: new Date(),
         });
 
-        // ❌ Sensitive fields remove
+        // â�Œ Sensitive fields remove
         const { password, otp: _, otpExpires, ...safeUser } = user.toObject();
 
         return {

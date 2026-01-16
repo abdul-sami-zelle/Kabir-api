@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -10,32 +10,48 @@ import { FbrModule } from './fbr/fbr.module';
 import { RolesModule } from './roles/roles.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtUserMiddleware } from './common/middleware/jwt-user.middleware';
+import { DashboardController } from './dashboard/dashboard.controller';
+import { DashboardService } from './dashboard/dashboard.service';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
-    // Load .env automatically
     ConfigModule.forRoot({
-      isGlobal: true, // 👈 makes env variables available everywhere
+      isGlobal: true,
     }),
 
-    // Use environment variable here
     MongooseModule.forRoot(process.env.MONGODB_URI!),
 
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+    }),
+
     CustomersModule,
-
     SalesSettingModule,
-
     SalesModule,
-
     FbrModule,
-
     RolesModule,
-
     UsersModule,
-
     AuthModule,
+    DashboardModule, // now this works
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController], // Remove DashboardController here; it's already in DashboardModule
+  providers: [AppService],      // Remove DashboardService here; it's already in DashboardModule
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(JwtUserMiddleware)
+      .forRoutes(
+        'sales',
+        'customers',
+        'roles',
+        'users',
+        'fbr',
+        'sales-setting',
+      );
+
+  }
+}

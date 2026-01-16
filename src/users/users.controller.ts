@@ -1,14 +1,18 @@
-// src/users/users.module.ts
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { Controller, Get } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User, UserSchema } from './schemas/user.schema';
 
-@Module({
-  imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-  ],
-  providers: [UsersService],
-  exports: [UsersService], // 👈 IMPORTANT (used in Auth)
-})
-export class UsersModule {}
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  // GET ALL USERS (hide password & username)
+  @Get()
+  async getAllUsers() {
+    const users = await this.usersService.findAll(); // we will add this in service
+    return {
+      success: true,
+      count: users.length,
+      users,
+    };
+  }
+}

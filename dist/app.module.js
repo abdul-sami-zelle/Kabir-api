@@ -19,7 +19,15 @@ const fbr_module_1 = require("./fbr/fbr.module");
 const roles_module_1 = require("./roles/roles.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
+const jwt_1 = require("@nestjs/jwt");
+const jwt_user_middleware_1 = require("./common/middleware/jwt-user.middleware");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(jwt_user_middleware_1.JwtUserMiddleware)
+            .forRoutes('sales', 'customers', 'roles', 'users', 'fbr', 'sales-setting');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -29,6 +37,9 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
             }),
             mongoose_1.MongooseModule.forRoot(process.env.MONGODB_URI),
+            jwt_1.JwtModule.register({
+                secret: process.env.JWT_SECRET,
+            }),
             customers_module_1.CustomersModule,
             sales_setting_module_1.SalesSettingModule,
             sales_module_1.SalesModule,
@@ -36,6 +47,7 @@ exports.AppModule = AppModule = __decorate([
             roles_module_1.RolesModule,
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
+            dashboard_module_1.DashboardModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

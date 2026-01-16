@@ -38,7 +38,7 @@ let SalesService = class SalesService {
         const ref_no = `REF-${custNumber}-${MM}-${YYYY}-${String(seq).padStart(4, '0')}`;
         return { inv_no, ref_no };
     }
-    async createSale(data) {
+    async createSale(data, userId) {
         if (!data.customer_code) {
             throw new common_1.NotFoundException('customer_code is required');
         }
@@ -54,6 +54,7 @@ let SalesService = class SalesService {
             ...data,
             inv_no,
             ref_no,
+            createdBy: userId,
             fbr_status: data.sendToFBR ? 'PENDING' : 'PENDING',
         });
         const savedSale = await sale.save();
@@ -85,13 +86,34 @@ let SalesService = class SalesService {
             message: 'Sale created without FBR submission',
         };
     }
-    async getAllSales(page = 1, limit = 10) {
+    async getAllSales(page = 1, limit = 10, filters) {
         page = Math.max(page, 1);
         limit = Math.max(limit, 1);
         const skip = (page - 1) * limit;
-        const totalCount = await this.saleModel.countDocuments();
+        const queryFilter = {};
+        if (filters?.startDate || filters?.endDate) {
+            queryFilter.createdAt = {};
+            if (filters.startDate)
+                queryFilter.createdAt.$gte = new Date(filters.startDate);
+            if (filters.endDate)
+                queryFilter.createdAt.$lte = new Date(filters.endDate);
+        }
+        if (filters?.customer)
+            queryFilter.customer_id = filters.customer;
+        if (filters?.biller)
+            queryFilter.biller_id = filters.biller;
+        if (filters?.status)
+            queryFilter.status = filters.status;
+        if (filters?.minAmount || filters?.maxAmount) {
+            queryFilter['details.grand_total'] = {};
+            if (filters.minAmount)
+                queryFilter['details.grand_total'].$gte = parseFloat(filters.minAmount);
+            if (filters.maxAmount)
+                queryFilter['details.grand_total'].$lte = parseFloat(filters.maxAmount);
+        }
+        const totalCount = await this.saleModel.countDocuments(queryFilter);
         const sales = await this.saleModel
-            .find()
+            .find(queryFilter)
             .populate('customer_id')
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -99,7 +121,7 @@ let SalesService = class SalesService {
             .exec();
         const totalPages = Math.ceil(totalCount / limit);
         const currentCount = sales.length;
-        const allSales = await this.saleModel.find();
+        const allSales = await this.saleModel.find(queryFilter);
         const totalSalesPKR = allSales.reduce((acc, sale) => acc + (sale.details?.grand_total || 0), 0);
         const totalInvoices = allSales.length;
         const CustomerModel = this.saleModel.db.model('Customer');
@@ -236,6 +258,22 @@ let SalesService = class SalesService {
             }
             throw new common_1.BadRequestException(`FBR API request failed: ${err.message}`);
         }
+    }
+    async changeStatus(id, status) {
+        const allowedStatuses = ['UNPAID', 'PAID', 'CANCELED'];
+        if (!allowedStatuses.includes(status)) {
+            throw new common_1.BadRequestException(`Invalid status. Allowed: ${allowedStatuses.join(', ')}`);
+        }
+        const sale = await this.saleModel.findById(id).exec();
+        if (!sale) {
+            throw new common_1.NotFoundException('Sale not found');
+        }
+        if ((status === 'CANCELED' || status === 'UNPAID') && sale?.fbr_invoice_no) {
+            throw new common_1.BadRequestException(`Cannot mark as ${status} because FBR invoice exists`);
+        }
+        sale.status = status;
+        await sale.save();
+        return sale;
     }
 };
 exports.SalesService = SalesService;

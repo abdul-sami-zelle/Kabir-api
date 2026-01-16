@@ -36,7 +36,7 @@ export class AuthController {
     // ✅ Store JWT in HttpOnly cookie
     res.cookie('access_token', token, {
       httpOnly: true,
-      secure: true, // set false in dev if no https
+      secure: false, // set false in dev if no https
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
@@ -73,7 +73,9 @@ export class AuthController {
     if (!token) return { success: false, user: null };
 
     try {
-      const { sub } = this.authService.jwtService.verify(token);
+      const { sub } = this.authService.jwtService.verify(token, {
+    secret: process.env.JWT_SECRET, // 🔑 add this
+  });
       const user = await this.authService.usersService.findById(sub);
       if (!user) return { success: false, user: null };
 

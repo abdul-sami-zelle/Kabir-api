@@ -4,7 +4,7 @@ export declare class SalesService {
     private saleModel;
     constructor(saleModel: Model<SaleDocument>);
     private generateNumbers;
-    createSale(data: Partial<Sale>): Promise<{
+    createSale(data: Partial<Sale>, userId: string): Promise<{
         success: boolean;
         sale: import("mongoose").Document<unknown, {}, SaleDocument, {}, {}> & Sale & import("mongoose").Document<unknown, any, any, Record<string, any>, {}> & Required<{
             _id: unknown;
@@ -27,7 +27,15 @@ export declare class SalesService {
         success?: undefined;
         fbr?: undefined;
     }>;
-    getAllSales(page?: number, limit?: number): Promise<{
+    getAllSales(page?: number, limit?: number, filters?: {
+        startDate?: string;
+        endDate?: string;
+        customer?: string;
+        biller?: string;
+        status?: string;
+        minAmount?: string;
+        maxAmount?: string;
+    }): Promise<{
         sales: Sale[];
         pagination: {
             totalPages: number;
@@ -51,4 +59,5 @@ export declare class SalesService {
         message: string;
         fbr_response: any;
     }>;
+    changeStatus(id: string, status: 'UNPAID' | 'PAID' | 'CANCELED'): Promise<Sale>;
 }

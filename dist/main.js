@@ -12,7 +12,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
-        origin: 'http://localhost:5173',
+        origin: 'https://app.simplykabir.com',
         credentials: true,
     });
     app.use((0, cookie_parser_1.default)());

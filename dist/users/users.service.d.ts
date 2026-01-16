@@ -53,4 +53,9 @@ export declare class UsersService {
     }> & {
         __v: number;
     }, {}, UserDocument, "findOneAndUpdate", {}>;
+    findAll(): Promise<(import("mongoose").FlattenMaps<UserDocument> & Required<{
+        _id: import("mongoose").FlattenMaps<unknown>;
+    }> & {
+        __v: number;
+    })[]>;
 }

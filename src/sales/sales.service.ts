@@ -35,37 +35,8 @@ export class SalesService {
     return { inv_no, ref_no };
   }
 
-  // 🔹 Create Sale
-  // async createSale(data: Partial<Sale>): Promise<Sale> {
-  //   if (!data.customer_code) {
-  //     throw new NotFoundException('customer_code is required');
-  //   }
+ async createSale(data: Partial<Sale>, userId: string) {
 
-  //   const { inv_no, ref_no } = await this.generateNumbers(data.customer_code);
-
-  //   // ✅ Ensure details object exists
-  //   data.details = data.details ?? {
-  //     items: [],
-  //     sub_total: 0,
-  //     discount: null,
-  //     tax: null,
-  //     grand_total: 0,
-  //   };
-
-  //   // Set nulls safely
-  //   if (!data.details.discount) data.details.discount = null;
-  //   if (!data.details.tax) data.details.tax = null;
-
-  //   const newSale = new this.saleModel({
-  //     ...data,
-  //     inv_no,
-  //     ref_no,
-  //   });
-
-  //   return newSale.save();
-  // }
-
-  async createSale(data: Partial<Sale>) {
     if (!data.customer_code) {
       throw new NotFoundException('customer_code is required');
     }
@@ -85,6 +56,7 @@ export class SalesService {
       ...data,
       inv_no,
       ref_no,
+      createdBy: userId,
       fbr_status: data.sendToFBR ? 'PENDING' : 'PENDING',
     });
 
@@ -129,9 +101,18 @@ export class SalesService {
   }
 
 
-async getAllSales(
+ async getAllSales(
   page: number = 1,
   limit: number = 10,
+  filters?: {
+    startDate?: string;
+    endDate?: string;
+    customer?: string;
+    biller?: string;
+    status?: string;
+    minAmount?: string;
+    maxAmount?: string;
+  },
 ): Promise<{
   sales: Sale[];
   pagination: {
@@ -150,10 +131,29 @@ async getAllSales(
   limit = Math.max(limit, 1);
   const skip = (page - 1) * limit;
 
+  // Build dynamic MongoDB filter
+  const queryFilter: any = {};
+
+  if (filters?.startDate || filters?.endDate) {
+    queryFilter.createdAt = {};
+    if (filters.startDate) queryFilter.createdAt.$gte = new Date(filters.startDate);
+    if (filters.endDate) queryFilter.createdAt.$lte = new Date(filters.endDate);
+  }
+
+  if (filters?.customer) queryFilter.customer_id = filters.customer;
+  if (filters?.biller) queryFilter.biller_id = filters.biller;
+  if (filters?.status) queryFilter.status = filters.status;
+
+  if (filters?.minAmount || filters?.maxAmount) {
+    queryFilter['details.grand_total'] = {};
+    if (filters.minAmount) queryFilter['details.grand_total'].$gte = parseFloat(filters.minAmount);
+    if (filters.maxAmount) queryFilter['details.grand_total'].$lte = parseFloat(filters.maxAmount);
+  }
+
   // --- Paginated sales
-  const totalCount = await this.saleModel.countDocuments();
+  const totalCount = await this.saleModel.countDocuments(queryFilter);
   const sales = await this.saleModel
-    .find()
+    .find(queryFilter)
     .populate('customer_id')
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -163,17 +163,15 @@ async getAllSales(
   const totalPages = Math.ceil(totalCount / limit);
   const currentCount = sales.length;
 
-  // --- Cumulative totals
-  const allSales = await this.saleModel.find(); // all sales for totals
+  // --- Cumulative totals based on filtered sales
+  const allSales = await this.saleModel.find(queryFilter); // only filtered sales
   const totalSalesPKR = allSales.reduce(
     (acc, sale) => acc + (sale.details?.grand_total || 0),
     0,
   );
-
   const totalInvoices = allSales.length;
 
-  // --- Get total active customers from Customer collection
-  const CustomerModel = this.saleModel.db.model('Customer'); // dynamically get Customer model
+  const CustomerModel = this.saleModel.db.model('Customer');
   const totalActiveCustomers = await CustomerModel.countDocuments({ status: 'ACTIVE' });
 
   return {
@@ -191,6 +189,7 @@ async getAllSales(
     },
   };
 }
+
 
 
 
@@ -339,5 +338,38 @@ async getAllSales(
     }
 
   }
+
+  // 🔹 Change Sale Status
+  async changeStatus(
+    id: string,
+    status: 'UNPAID' | 'PAID' | 'CANCELED',
+  ): Promise<Sale> {
+    const allowedStatuses = ['UNPAID', 'PAID', 'CANCELED'];
+    if (!allowedStatuses.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status. Allowed: ${allowedStatuses.join(', ')}`,
+      );
+    }
+
+    // Fetch the sale first
+    const sale = await this.saleModel.findById(id).exec();
+    if (!sale) {
+      throw new NotFoundException('Sale not found');
+    }
+
+    // 🔹 Check fbr_invoice_no if user tries to mark UNPAID or CANCELED
+    if ((status === 'CANCELED' || status === 'UNPAID') && sale?.fbr_invoice_no) {
+      throw new BadRequestException(
+        `Cannot mark as ${status} because FBR invoice exists`,
+      );
+    }
+
+    // Update status
+    sale.status = status;
+    await sale.save();
+
+    return sale;
+  }
+
 
 }

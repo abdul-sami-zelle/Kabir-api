@@ -10,7 +10,7 @@ export declare class AuthService {
     login(body: any): Promise<{
         message: string;
     }>;
-    sendOtpEmail(email: string, otp: string): Promise<void>;
+    sendOtpEmail(email: string, fullName: string, otp: string): Promise<void>;
     verifyOtp(body: any): Promise<{
         token: string;
         user: {

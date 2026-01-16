@@ -34,11 +34,17 @@ export declare class Sale {
         };
         grand_total: number;
     };
+    status: string;
     sendToFBR: boolean;
     fbr_response: any;
     fbr_invoice_no: string;
     fbr_status: string;
     fbr_error: string;
+    createdBy: Types.ObjectId;
+    po: string;
+    orderNo: string;
+    invMode: string;
+    poDate: string;
 }
 export declare const SaleSchema: import("mongoose").Schema<Sale, import("mongoose").Model<Sale, any, any, any, Document<unknown, any, Sale, any, {}> & Sale & {
     _id: Types.ObjectId;

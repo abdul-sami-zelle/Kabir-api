@@ -22,11 +22,17 @@ let Sale = class Sale {
     due_date;
     sale_type;
     details;
+    status;
     sendToFBR;
     fbr_response;
     fbr_invoice_no;
     fbr_status;
     fbr_error;
+    createdBy;
+    po;
+    orderNo;
+    invMode;
+    poDate;
 };
 exports.Sale = Sale;
 __decorate([
@@ -114,6 +120,14 @@ __decorate([
     __metadata("design:type", Object)
 ], Sale.prototype, "details", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({
+        type: String,
+        enum: ['UNPAID', 'PAID', 'CANCELED'],
+        default: 'UNPAID',
+    }),
+    __metadata("design:type", String)
+], Sale.prototype, "status", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ type: Boolean, default: false }),
     __metadata("design:type", Boolean)
 ], Sale.prototype, "sendToFBR", void 0);
@@ -144,6 +158,30 @@ __decorate([
     (0, mongoose_1.Prop)({ type: String, default: null }),
     __metadata("design:type", String)
 ], Sale.prototype, "fbr_error", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User', required: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Sale.prototype, "createdBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "po", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "orderNo", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: String,
+        enum: ['Initial', 'Final'],
+        default: 'Final',
+    }),
+    __metadata("design:type", String)
+], Sale.prototype, "invMode", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "poDate", void 0);
 exports.Sale = Sale = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Sale);

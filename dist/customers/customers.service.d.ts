@@ -12,4 +12,28 @@ export declare class CustomersService {
     remove(id: string): Promise<{
         message: string;
     }>;
+    findAllPaginated(page?: number, limit?: number, filters?: {
+        status?: string;
+        customerName?: string;
+        customerType?: string;
+        fbrRegistrationType?: string;
+        fbrStatus?: string;
+        provinceCode?: string;
+    }): Promise<{
+        customers: Customer[];
+        pagination: {
+            totalPages: number;
+            currentPage: number;
+            totalCount: number;
+            currentCount: number;
+        };
+        cummulations: {
+            totalCustomers: number;
+            registeredCustomers: number;
+            activeCustomers: number;
+            totalCompanies?: number;
+            totalIndividuals?: number;
+            totalVendors?: number;
+        };
+    }>;
 }

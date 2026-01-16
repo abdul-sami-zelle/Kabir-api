@@ -34,7 +34,7 @@ let AuthController = class AuthController {
         const { token, user } = await this.authService.verifyOtp(body);
         res.cookie('access_token', token, {
             httpOnly: true,
-            secure: true,
+            secure: false,
             sameSite: 'strict',
             maxAge: 24 * 60 * 60 * 1000,
         });
@@ -60,7 +60,9 @@ let AuthController = class AuthController {
         if (!token)
             return { success: false, user: null };
         try {
-            const { sub } = this.authService.jwtService.verify(token);
+            const { sub } = this.authService.jwtService.verify(token, {
+                secret: process.env.JWT_SECRET,
+            });
             const user = await this.authService.usersService.findById(sub);
             if (!user)
                 return { success: false, user: null };

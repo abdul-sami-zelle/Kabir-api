@@ -3,7 +3,7 @@ import { Sale } from './schemas/sale.schema';
 export declare class SalesController {
     private readonly salesService;
     constructor(salesService: SalesService);
-    create(body: Partial<Sale>): Promise<{
+    create(body: Partial<Sale>, req: any): Promise<{
         success: boolean;
         sale: import("mongoose").Document<unknown, {}, import("./schemas/sale.schema").SaleDocument, {}, {}> & Sale & import("mongoose").Document<unknown, any, any, Record<string, any>, {}> & Required<{
             _id: unknown;
@@ -26,7 +26,7 @@ export declare class SalesController {
         success?: undefined;
         fbr?: undefined;
     }>;
-    getAll(page?: string, limit?: string): Promise<{
+    getAll(page?: string, limit?: string, query?: any): Promise<{
         sales: Sale[];
         pagination: {
             totalPages: number;
@@ -41,15 +41,16 @@ export declare class SalesController {
         };
     }>;
     getOne(id: string): Promise<Sale>;
-    update(id: string, body: Partial<Sale>): Promise<Sale>;
-    delete(id: string): Promise<{
+    update(id: string, body: Partial<Sale>, req: any): Promise<Sale>;
+    delete(id: string, req: any): Promise<{
         message: string;
     }>;
     sendToFBR(body: {
         inv_no: string;
-    }): Promise<{
+    }, req: any): Promise<{
         success: boolean;
         message: string;
         fbr_response: any;
     }>;
+    updateStatus(id: string, status: 'UNPAID' | 'PAID' | 'CANCELED', req: any): Promise<Sale>;
 }

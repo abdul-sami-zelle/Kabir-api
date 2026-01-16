@@ -62,6 +62,56 @@ let CustomersService = class CustomersService {
             throw new common_1.NotFoundException('Customer not found');
         return { message: 'Customer deleted successfully' };
     }
+    async findAllPaginated(page = 1, limit = 10, filters) {
+        page = Math.max(page, 1);
+        limit = Math.max(limit, 1);
+        const skip = (page - 1) * limit;
+        const queryFilter = {};
+        if (filters?.status)
+            queryFilter.status = filters.status;
+        if (filters?.customerName)
+            queryFilter.customerName = { $regex: filters.customerName, $options: 'i' };
+        if (filters?.customerType)
+            queryFilter.customerType = filters.customerType;
+        if (filters?.fbrRegistrationType)
+            queryFilter['fbrVerification.type'] = filters.fbrRegistrationType;
+        if (filters?.fbrStatus)
+            queryFilter['fbrVerification.status'] = filters.fbrStatus;
+        if (filters?.provinceCode)
+            queryFilter.provinceCode = filters.provinceCode;
+        const totalCount = await this.customerModel.countDocuments(queryFilter);
+        const customers = await this.customerModel
+            .find(queryFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(totalCount / limit);
+        const currentCount = customers.length;
+        const totalCustomers = await this.customerModel.countDocuments({});
+        const activeCustomers = await this.customerModel.countDocuments({ status: 'ACTIVE' });
+        const registeredCustomers = await this.customerModel.countDocuments({ 'fbrVerification.type': 'Registered' });
+        const totalCompanies = await this.customerModel.countDocuments({ customerType: 'company' });
+        const totalIndividuals = await this.customerModel.countDocuments({ customerType: 'individual' });
+        const totalVendors = await this.customerModel.countDocuments({ customerType: 'vendor' });
+        return {
+            customers,
+            pagination: {
+                totalPages,
+                currentPage: page,
+                totalCount,
+                currentCount,
+            },
+            cummulations: {
+                totalCustomers,
+                registeredCustomers,
+                activeCustomers,
+                totalCompanies,
+                totalIndividuals,
+                totalVendors,
+            },
+        };
+    }
 };
 exports.CustomersService = CustomersService;
 exports.CustomersService = CustomersService = __decorate([

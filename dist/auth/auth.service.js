@@ -48,6 +48,8 @@ const bcrypt = __importStar(require("bcryptjs"));
 const nodemailer = __importStar(require("nodemailer"));
 const users_service_1 = require("../users/users.service");
 const jwt_1 = require("@nestjs/jwt");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 let AuthService = class AuthService {
     usersService;
     jwtService;
@@ -94,7 +96,7 @@ let AuthService = class AuthService {
             otpExpires,
         });
         try {
-            await this.sendOtpEmail(user.email, otp);
+            await this.sendOtpEmail(user.email, user.fullName, otp);
         }
         catch (error) {
             console.error('OTP email failed:', error.message);
@@ -103,21 +105,36 @@ let AuthService = class AuthService {
             message: 'OTP generated. Please verify to login.',
         };
     }
-    async sendOtpEmail(email, otp) {
+    async sendOtpEmail(email, fullName, otp) {
+        const otpDigits = otp.split('');
+        const templatePath = path.join(process.cwd(), 'src', 'mail', 'templates', 'otp.html');
+        console.log(templatePath);
+        console.log(fullName);
+        console.log(otpDigits);
+        let html = fs.readFileSync(templatePath, 'utf8');
+        html = html.replace('{{full_name}}', fullName);
+        for (let i = 0; i < 6; i++) {
+            html = html.replace(`{{otp_${i + 1}}}`, otpDigits[i] || '');
+        }
         const transporter = nodemailer.createTransport({
-            host: 'mail.crescentcare.co',
+            host: 'mail.simplykabir.com',
             port: 587,
             secure: false,
             auth: {
-                user: 'no-reply@crescentcare.co',
-                pass: 'Swat@123@@'
-            }
+                user: 'no-reply@simplykabir.com',
+                pass: 'delta@123@@',
+            },
+            requireTLS: true,
+            tls: {
+                servername: 'simplykabir.com',
+                minVersion: 'TLSv1.2',
+            },
         });
         await transporter.sendMail({
-            from: '"My App" <no-reply@crescentcare.co>',
+            from: 'My App <no-reply@simplykabir.com>',
             to: email,
-            subject: 'Login OTP',
-            text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+            subject: 'Your Login OTP',
+            html,
         });
     }
     async verifyOtp(body) {
@@ -136,7 +153,7 @@ let AuthService = class AuthService {
         const token = this.jwtService.sign({
             sub: user._id.toString(),
             roleId: user.roleId,
-        });
+        }, { secret: process.env.JWT_SECRET });
         await this.usersService.update(user._id.toString(), {
             otp: null,
             otpExpires: null,

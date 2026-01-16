@@ -60,6 +60,12 @@ let UsersService = class UsersService {
     updateLastLogin(id) {
         return this.userModel.findByIdAndUpdate(id, { lastLoginAt: new Date() }, { new: true });
     }
+    async findAll() {
+        return this.userModel
+            .find()
+            .select('-password -username -otp -otpExpires')
+            .lean();
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

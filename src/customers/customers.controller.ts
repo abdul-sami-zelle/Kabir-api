@@ -8,6 +8,7 @@ import {
     Param,
     UploadedFile,
     UseInterceptors,
+    Query
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -40,7 +41,7 @@ export class CustomersController {
     )
 
     async create(@UploadedFile() file: Express.Multer.File, @Body() body: any) {
-        console.log(body,"here")
+        console.log(body, "here")
         if (file) {
             body.logoUrl = `/uploads/customers/${file.filename}`;
         }
@@ -51,6 +52,24 @@ export class CustomersController {
     @Get()
     findAll() {
         return this.customersService.findAll();
+    }
+
+        @Get('get-all')
+    async getPaginated(
+        @Query('page') page: string,
+        @Query('limit') limit: string,
+        @Query('status') status: string,
+        @Query('customerName') customerName: string,
+        @Query('customerType') customerType: string,
+        @Query('fbrRegistrationType') fbrRegistrationType: string,
+        @Query('fbrStatus') fbrStatus: string,
+        @Query('provinceCode') provinceCode: string,
+    ) {
+        return this.customersService.findAllPaginated(
+            parseInt(page) || 1,
+            parseInt(limit) || 10,
+            { status, customerName, customerType, fbrRegistrationType, fbrStatus, provinceCode },
+        );
     }
 
     // ✅ GET ONE CUSTOMER
@@ -88,4 +107,10 @@ export class CustomersController {
     remove(@Param('id') id: string) {
         return this.customersService.remove(id);
     }
+
+
+
+
+
+
 }
